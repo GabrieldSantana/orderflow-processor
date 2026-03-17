@@ -7,6 +7,12 @@ namespace OrderFlow.Infrastructure.Repositories
     public class InMemoryOrderRepository : IOrderRepository
     {
         private static readonly ConcurrentDictionary<Guid, Order> _orders = new(); // Using ConcurrentDictionary because it supports multiple threads safely
+        
+        public Task AddAsync(Order order)
+        {
+            _orders[order.Id] = order;
+            return Task.CompletedTask;
+        }
         public Task<Order?> GetByIdAsync(Guid id)
         {
             _orders.TryGetValue(id, out var order);
@@ -14,12 +20,6 @@ namespace OrderFlow.Infrastructure.Repositories
         }
 
         public Task UpdateAsync(Order order)
-        {
-            _orders[order.Id] = order;
-            return Task.CompletedTask;
-        }
-
-        public Task AddAsync(Order order)
         {
             _orders[order.Id] = order;
             return Task.CompletedTask;
