@@ -18,13 +18,28 @@ namespace OrderFlow.API.Controllers
             _repository = repository;
         }
 
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(Guid id)
+        {
+            var order = await _repository.GetByIdAsync(id);
+
+            if (order == null)
+                return NotFound();
+
+            return Ok(order);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Create(CreateOrderRequest request)
         {
             var order = new Order(request.CostumerEmail, request.TotalAmount);
             await _repository.AddAsync(order);
             
-            return Ok(order.Id);
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = order.Id },
+                order
+                );
         }
 
         [HttpPost("{id}/process")]
