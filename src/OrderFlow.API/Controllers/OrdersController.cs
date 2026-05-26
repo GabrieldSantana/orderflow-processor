@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using OrderFlow.API.Contracts;
+using OrderFlow.Application.Events;
 using OrderFlow.Application.Interfaces;
 using OrderFlow.Domain.Entities;
+using OrderFlow.Infrastructure.Messaging;
 
 namespace OrderFlow.API.Controllers
 {
@@ -11,11 +13,13 @@ namespace OrderFlow.API.Controllers
     {
         private readonly IOrderProcessor _processor;
         private readonly IOrderRepository _repository;
+        private readonly RabbitMqPublisher _publisher;
 
-        public OrdersController(IOrderProcessor processor, IOrderRepository repository)
+        public OrdersController(IOrderProcessor processor, IOrderRepository repository, RabbitMqPublisher publisher)
         {
             _processor = processor;
             _repository = repository;
+            _publisher = publisher;
         }
 
         [HttpGet("{id}")]
@@ -34,6 +38,18 @@ namespace OrderFlow.API.Controllers
         {
             var order = new Order(request.CostumerEmail, request.TotalAmount);
             await _repository.AddAsync(order);
+
+            // Creates the event
+            var orderEvent = new OrderCreatedEvent
+            {
+                OrderId = order.Id,
+                CostumerEmail = order.CustomerEmail,
+                TotalAmount = order.TotalAmount,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            // Publishes the event to RabbitMQ
+            await _publisher.Publish("order-created", orderEvent);
             
             return CreatedAtAction(
                 nameof(GetById),

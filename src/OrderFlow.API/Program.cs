@@ -1,5 +1,6 @@
 using OrderFlow.Application.Interfaces;
 using OrderFlow.Application.Services;
+using OrderFlow.Infrastructure.Messaging;
 using OrderFlow.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +12,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<IOrderRepository, InMemoryOrderRepository>(); // Use of Singleton to ensure a single instance across the entire application
 builder.Services.AddScoped<IOrderProcessor, OrderProcessor>();
+
+builder.Services.AddSingleton<RabbitMqPublisher>();
 
 var app = builder.Build();
 
